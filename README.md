@@ -14,7 +14,7 @@
 - FastAPI
 - Vue.js
 - PostgreSQL (продакшен), SQLite (розробка), Docker, Docker Compose
-
+suggestion
 ## Запуск
 
 Потрібен менеджер проєктів [uv](https://docs.astral.sh/uv/).
