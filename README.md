@@ -14,10 +14,15 @@
 - FastAPI
 - Vue.js
 - PostgreSQL (продакшен), SQLite (розробка), Docker, Docker Compose
-
+suggestion
 ## Запуск
 
-Інструкцію буде додано в ЛР 2.
+Потрібен менеджер проєктів [uv](https://docs.astral.sh/uv/).
+
+```bash
+uv sync                  # створити середовище і встановити залежності
+uv run student-portal    # запустити консольний застосунок
+```
 
 ## Планування
 
