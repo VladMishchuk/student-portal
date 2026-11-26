@@ -68,6 +68,4 @@ def load_group(path: Path) -> Group:
     except FileNotFoundError as error:
         raise StorageError(f"файл даних не знайдено: {path}") from error
     except (KeyError, TypeError, ValueError) as error:
-        raise StorageError(
-            f"файл {path} має неправильний формат: {error}"
-        ) from error
+        raise StorageError(f"файл {path} має неправильний формат: {error}") from error
