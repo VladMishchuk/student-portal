@@ -7,7 +7,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any, TextIO
 
-from student_portal.decorators import timed
+from student_portal.decorators import Timer
 from student_portal.exceptions import StorageError
 from student_portal.grades import Grade
 from student_portal.group import Group
@@ -50,7 +50,7 @@ def atomic_write(path: Path) -> Iterator[TextIO]:
     temp.replace(path)
 
 
-@timed
+@Timer("save_group")
 def save_group(group: Group, path: Path) -> None:
     with atomic_write(path) as file:
         json.dump(group_to_dict(group), file, ensure_ascii=False, indent=2)

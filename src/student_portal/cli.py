@@ -6,7 +6,7 @@ import os
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
-from student_portal.decorators import timed
+from student_portal.decorators import Timer
 from student_portal.exceptions import PortalError, StorageError
 from student_portal.grades import Grade
 from student_portal.group import Group
@@ -107,12 +107,13 @@ def export_ranking(group: Group) -> None:
 @command("9", "імпорт оцінок з журналу CSV")
 def import_grades(group: Group) -> None:
     path = Path(input("Шлях до файлу: ").strip())
-    count = import_journal(group, path)
-    print(f"Імпортовано оцінок: {count}")
+    with Timer("імпорт") as t:
+        count = import_journal(group, path)
+    print(f"Імпортовано оцінок: {count} ({t.elapsed * 1000:.1f} мс)")
 
 
 @command("10", "розіслати результати")
-@timed
+@Timer("send_notifications")
 def send_notifications(group: Group) -> None:
     for message in asyncio.run(notify_all(group)):
         print(f"Надіслано: {message}")

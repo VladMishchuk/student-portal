@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from student_portal.decorators import timed
+from student_portal.decorators import Timer
 from student_portal.exceptions import (
     JournalFormatError,
     StorageError,
@@ -58,7 +58,7 @@ def parse_entries(rows: Iterable[Row]) -> Iterator[JournalEntry]:
         yield entry
 
 
-@timed
+@Timer("import_journal")
 def import_journal(group: Group, path: Path) -> int:
     """Додає до групи всі оцінки з журналу або, у разі помилки, жодної."""
     count = 0
