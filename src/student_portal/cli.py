@@ -1,14 +1,17 @@
 """Консольний інтерфейс."""
 
+import asyncio
 import logging
 import os
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
+from student_portal.decorators import timed
 from student_portal.exceptions import PortalError, StorageError
 from student_portal.grades import Grade
 from student_portal.group import Group
 from student_portal.journal import import_journal
+from student_portal.notify import notify_all
 from student_portal.people import Student
 from student_portal.storage import load_group, save_group
 
@@ -106,6 +109,13 @@ def import_grades(group: Group) -> None:
     path = Path(input("Шлях до файлу: ").strip())
     count = import_journal(group, path)
     print(f"Імпортовано оцінок: {count}")
+
+
+@command("10", "розіслати результати")
+@timed
+def send_notifications(group: Group) -> None:
+    for message in asyncio.run(notify_all(group)):
+        print(f"Надіслано: {message}")
 
 
 def run(group: Group) -> None:
