@@ -10,12 +10,14 @@ from student_portal.people import Student
 from student_portal.storage import load_group, save_group
 
 DATA_FILE = Path("data/group.json")
+RANKING_FILE = Path("data/ranking.csv")
 
 MENU = """
 1 - список студентів      5 - додати оцінку
 2 - рейтинг               6 - видалити студента
 3 - пошук за прізвищем    7 - розподіл оцінок ECTS
-4 - додати студента       0 - зберегти і вийти"""
+4 - додати студента       8 - експорт рейтингу у CSV
+0 - зберегти і вийти"""
 
 
 def format_average(value: float | None) -> str:
@@ -61,6 +63,9 @@ def run(group: Group) -> None:
                 case "7":
                     for letter, count in group.ects_distribution().items():
                         print(f"{letter:<2} {'█' * count} {count}")
+                case "8":
+                    group.export_ranking_csv(RANKING_FILE)
+                    print(f"Рейтинг експортовано у {RANKING_FILE}")
                 case "0":
                     return
                 case _:

@@ -1,8 +1,10 @@
 """Академічна група."""
 
+import csv
 from collections import Counter
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from pathlib import Path
 from statistics import fmean
 
 from student_portal.exceptions import DuplicateStudentError, StudentNotFoundError
@@ -62,3 +64,13 @@ class Group:
     def ects_distribution(self) -> dict[str, int]:
         counts = Counter(g.ects for s in self for g in s.grades)
         return {letter: counts[letter] for letter in ECTS_LETTERS if counts[letter]}
+
+    def export_ranking_csv(self, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8-sig", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["Місце", "ПІБ", "Середній бал"])
+            for place, student in enumerate(self.ranking(), start=1):
+                avg = student.average()
+                avg_str = "-" if avg is None else f"{avg:.1f}"
+                writer.writerow([place, student.full_name, avg_str])
