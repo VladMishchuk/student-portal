@@ -18,7 +18,7 @@ def ects_grade(score: int) -> str:
                 f"оцінка має бути від {MIN_SCORE} до {MAX_SCORE}, отримано {score}"
             )
         case s if s >= 90:
-            return "A"
+            return "B"
         case s if s >= 82:
             return "B"
         case s if s >= 75:
