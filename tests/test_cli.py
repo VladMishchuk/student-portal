@@ -156,9 +156,12 @@ def test_timer_as_decorator_logs_label_and_keeps_name(
 
 
 def test_timer_records_elapsed_after_exception(caplog) -> None:
-    with caplog.at_level(logging.INFO):
-        with pytest.raises(RuntimeError, match="збій"), Timer("помилка") as timer:
-            raise RuntimeError("збій")
+    with (
+        caplog.at_level(logging.INFO),
+        pytest.raises(RuntimeError, match="збій"),
+        Timer("помилка") as timer,
+    ):
+        raise RuntimeError("збій")
 
     assert timer.elapsed >= 0.0
     assert "помилка: " in caplog.text

@@ -88,9 +88,7 @@ def test_load_missing_file_raises_storage_error(tmp_path: Path) -> None:
         ),
     ],
 )
-def test_load_corrupted_file_raises_storage_error(
-    tmp_path: Path, content: str
-) -> None:
+def test_load_corrupted_file_raises_storage_error(tmp_path: Path, content: str) -> None:
     path = tmp_path / "broken.json"
     path.write_text(content, encoding="utf-8")
 
