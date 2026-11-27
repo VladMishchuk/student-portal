@@ -4,7 +4,11 @@ import inspect
 
 import pytest
 
-from student_portal.exceptions import DuplicateStudentError, StudentNotFoundError
+from student_portal.exceptions import (
+    DuplicateStudentError,
+    InvalidGradeError,
+    StudentNotFoundError,
+)
 from student_portal.grades import Grade
 from student_portal.group import Group
 from student_portal.people import Student
@@ -123,3 +127,23 @@ def test_group_courses_and_ects_distribution(group: Group) -> None:
 
     assert courses == {"Python", "Git"}
     assert list(distribution.items()) == [("A", 1), ("B", 1), ("E", 1)]
+
+
+def test_transaction_commits_changes_when_no_error(group: Group) -> None:
+    with group.transaction():
+        group.remove(2)
+        group.get(3).add_grade(Grade("Python", 80))
+
+    assert len(group) == 2
+    assert group.get(3).average() == pytest.approx(80.0)
+
+
+def test_transaction_restores_group_after_error(group: Group) -> None:
+    before = [(s.id, s.average()) for s in group]
+
+    with pytest.raises(InvalidGradeError), group.transaction():
+        group.remove(2)
+        group.get(3).add_grade(Grade("Python", 70))
+        group.get(1).add_grade(Grade("Python", 105))
+
+    assert [(s.id, s.average()) for s in group] == before
