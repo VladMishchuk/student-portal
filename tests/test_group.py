@@ -1,6 +1,8 @@
 """Тести моделі академічної групи."""
 
+import csv
 import inspect
+from pathlib import Path
 
 import pytest
 
@@ -147,3 +149,68 @@ def test_transaction_restores_group_after_error(group: Group) -> None:
         group.get(1).add_grade(Grade("Python", 105))
 
     assert [(s.id, s.average()) for s in group] == before
+
+
+def test_export_ranking_csv_creates_bom_header_and_places(
+    group: Group, tmp_path: Path
+) -> None:
+    path = tmp_path / "exports" / "ranking.csv"
+
+    group.export_ranking_csv(path)
+
+    raw_bytes = path.read_bytes()
+    assert raw_bytes.startswith(b"\xef\xbb\xbf")
+    with path.open(encoding="utf-8-sig", newline="") as file:
+        rows = list(csv.reader(file))
+    assert rows == [
+        ["Місце", "ПІБ", "Середній бал"],
+        ["1", "Коваль Олена", "91.5"],
+        ["2", "Мельник Андрій", "61.0"],
+        ["3", "Бойко Ірина", "-"],
+    ]
+
+
+@pytest.mark.parametrize(
+    ("students_spec", "expected_rows"),
+    [
+        pytest.param(
+            [],
+            [["Місце", "ПІБ", "Середній бал"]],
+            id="empty-group",
+        ),
+        pytest.param(
+            [("Шевченко", (100,))],
+            [
+                ["Місце", "ПІБ", "Середній бал"],
+                ["1", "Шевченко Студент", "100.0"],
+            ],
+            id="single-student",
+        ),
+        pytest.param(
+            [("Савченко", (80,)), ("Антоненко", (80,)), ("Яковенко", ())],
+            [
+                ["Місце", "ПІБ", "Середній бал"],
+                ["1", "Антоненко Студент", "80.0"],
+                ["2", "Савченко Студент", "80.0"],
+                ["3", "Яковенко Студент", "-"],
+            ],
+            id="tie-and-ungraded",
+        ),
+    ],
+)
+def test_export_ranking_csv_variants(
+    make_student,
+    tmp_path: Path,
+    students_spec: list[tuple[str, tuple[int, ...]]],
+    expected_rows: list[list[str]],
+) -> None:
+    grp = Group("КН-11")
+    for last_name, scores in students_spec:
+        grp.add(make_student(last_name, *scores))
+    path = tmp_path / "ranking.csv"
+
+    grp.export_ranking_csv(path)
+
+    with path.open(encoding="utf-8-sig", newline="") as file:
+        rows = list(csv.reader(file))
+    assert rows == expected_rows
