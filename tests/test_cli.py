@@ -11,17 +11,6 @@ from student_portal.decorators import Timer, timed
 from student_portal.group import Group
 
 
-@pytest.fixture
-def answers(monkeypatch):
-    """Підміняє input(): кожен виклик повертає наступну відповідь зі списку."""
-
-    def set_answers(*values: str) -> None:
-        replies = iter(values)
-        monkeypatch.setattr("builtins.input", lambda prompt="": next(replies))
-
-    return set_answers
-
-
 def test_menu_adds_student(group: Group, answers, capsys) -> None:
     answers("4", "Марія", "Шевчук", "0")
 
@@ -165,3 +154,15 @@ def test_timer_records_elapsed_after_exception(caplog) -> None:
 
     assert timer.elapsed >= 0.0
     assert "помилка: " in caplog.text
+
+
+def test_timer_uses_perf_counter_difference(mocker) -> None:
+    mocker.patch(
+        "student_portal.decorators.time.perf_counter",
+        side_effect=[10.0, 10.25],
+    )
+
+    with Timer("точний") as timer:
+        pass
+
+    assert timer.elapsed == 0.25

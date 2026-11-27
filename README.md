@@ -61,6 +61,35 @@ uv run pytest -v               # докладний вивід кожного т
 uv run pytest -k ranking       # запустити тести за фільтром назви
 ```
 
+## Сервер деканату
+
+Пункт меню `11` завантажує список групи у форматі `group.json` з сервера деканату. Адреса задається змінною середовища `DEKANAT_URL` (за замовчуванням `https://dekanat.example.edu/api/groups/kn-11`).
+
+Для локальної перевірки можна роздати каталог `data/` вбудованим вебсервером Python:
+
+```bash
+uv run python -m http.server 8001 -d data
+```
+
+В іншому терміналі (PowerShell):
+
+```powershell
+$env:DEKANAT_URL="http://127.0.0.1:8001/group.json"; uv run student-portal
+```
+
+## Покриття і CI
+
+Покриття коду (оператори та розгалуження, мінімальний поріг — `90 %`) перевіряється через `pytest-cov`:
+
+```bash
+uv run pytest --cov
+uv run pytest --cov --cov-report=term-missing --cov-report=html
+```
+
+Конвеєр GitHub Actions (`.github/workflows/ci.yml`) автоматично запускається для кожного pull request та push у `main` і виконує два незалежні завдання:
+- `checks` — `uv sync --locked`, `ruff check`, `ruff format --check`, `mypy src`;
+- `tests` — `uv sync --locked`, `pytest --cov --cov-report=term-missing --cov-report=html` із завантаженням артефакту `coverage-html`.
+
 ## Планування
 
 Задачі та їхній статус ведуться на дошці GitHub Projects.
