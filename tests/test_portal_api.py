@@ -229,3 +229,25 @@ def test_settings_from_env_and_validation(monkeypatch, api_db):
             monkeypatch.setenv("PORTAL_API_KEY", bad_key)
         with pytest.raises(ValidationError):
             Settings(_env_file=None)
+
+
+def test_patch_grade_partial_update_and_errors(api):
+    """PATCH /grades/{grade_id}: часткова зміна балів не змінює дату; 422 і 404."""
+    before = api.get("/students/1").json()["grades"][0]
+    grade_id = before["id"]
+
+    updated = api.patch(f"/grades/{grade_id}", json={"score": 74})
+    assert updated.status_code == 200
+    body = updated.json()
+    assert body["score"] == 74
+    assert body["ects"] == "D"
+    assert body["course"] == before["course"]
+    assert body["graded_on"] == before["graded_on"]
+
+    invalid = api.patch(f"/grades/{grade_id}", json={"score": 101})
+    assert invalid.status_code == 422
+    assert invalid.json()["detail"][0]["loc"] == ["body", "score"]
+
+    not_found = api.patch("/grades/999", json={"score": 80})
+    assert not_found.status_code == 404
+    assert not_found.json() == {"detail": "Оцінку з id=999 не знайдено"}

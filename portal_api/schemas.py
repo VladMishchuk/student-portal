@@ -4,9 +4,20 @@ from datetime import date
 from statistics import fmean
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, computed_field
 
 from student_portal.grades import MAX_SCORE, MIN_SCORE, ects_grade
+
+
+def _not_in_future(value: date) -> date:
+    if value > date.today():
+        raise ValueError("дата оцінки не може бути в майбутньому")
+    return value
+
+
+CourseStr = Annotated[str, Field(min_length=1, max_length=100)]
+ScoreInt = Annotated[int, Field(ge=MIN_SCORE, le=MAX_SCORE)]
+PastOrTodayDate = Annotated[date, AfterValidator(_not_in_future)]
 
 
 class GradeIn(BaseModel):
@@ -19,16 +30,19 @@ class GradeIn(BaseModel):
         },
     )
 
-    course: Annotated[str, Field(min_length=1, max_length=100)]
-    score: Annotated[int, Field(ge=MIN_SCORE, le=MAX_SCORE)]
-    graded_on: date
+    course: CourseStr
+    score: ScoreInt
+    graded_on: PastOrTodayDate
 
-    @field_validator("graded_on")
-    @classmethod
-    def not_in_future(cls, value: date) -> date:
-        if value > date.today():
-            raise ValueError("дата оцінки не може бути в майбутньому")
-        return value
+
+class GradeUpdate(BaseModel):
+    """Часткове оновлення оцінки: ті самі правила, що й у GradeIn."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    course: CourseStr | None = None
+    score: ScoreInt | None = None
+    graded_on: PastOrTodayDate | None = None
 
 
 class GradeOut(BaseModel):

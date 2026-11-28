@@ -14,7 +14,14 @@ from sqlalchemy.orm import selectinload
 from student_portal.group import Group
 
 from . import orm
-from .schemas import GradeIn, GradeOut, RankingItem, StudentOut, StudentPage
+from .schemas import (
+    GradeIn,
+    GradeOut,
+    GradeUpdate,
+    RankingItem,
+    StudentOut,
+    StudentPage,
+)
 from .settings import Settings
 
 api_key_header = APIKeyHeader(
@@ -41,6 +48,9 @@ async def check_api_key(
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 NOT_FOUND: dict[int | str, dict[str, Any]] = {404: {"description": "Студента немає"}}
+GRADE_NOT_FOUND: dict[int | str, dict[str, Any]] = {
+    404: {"description": "Оцінку не знайдено"}
+}
 
 router = APIRouter(dependencies=[Depends(check_api_key)])
 
@@ -100,6 +110,29 @@ async def add_grade(
     await find_student(session, student_id)
     record = orm.Grade(student_id=student_id, **grade.model_dump())
     session.add(record)
+    await session.commit()
+    return GradeOut.model_validate(record)
+
+
+@router.patch(
+    "/grades/{grade_id}",
+    tags=["grades"],
+    responses=GRADE_NOT_FOUND,
+)
+async def update_grade(
+    grade_id: int,
+    grade: GradeUpdate,
+    session: SessionDep,
+) -> GradeOut:
+    """Часткове оновлення оцінки; оновлюються лише передані поля."""
+    record = await session.get(orm.Grade, grade_id)
+    if record is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            f"Оцінку з id={grade_id} не знайдено",
+        )
+    for field, value in grade.model_dump(exclude_unset=True).items():
+        setattr(record, field, value)
     await session.commit()
     return GradeOut.model_validate(record)
 
