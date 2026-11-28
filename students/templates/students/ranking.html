@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="uk">
+<head><meta charset="utf-8"><title>Рейтинг {{ group.name }}</title></head>
+<body>
+  <h1>Рейтинг групи {{ group.name }}</h1>
+  <ol>
+    {% for student in group.ranking %}
+      <li>{{ student.full_name }}: {{ student.average|default:"немає оцінок" }}</li>
+    {% endfor %}
+  </ol>
+</body>
+</html>
