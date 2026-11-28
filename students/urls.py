@@ -8,6 +8,7 @@ urlpatterns = [
     path("<int:student_id>/", views.student_detail, name="detail"),
     path("<int:student_id>.json", views.student_json, name="detail-json"),
     path("ranking/", views.RankingView.as_view(), name="ranking"),
+    path("ranking.json", views.ranking_json, name="ranking-json"),
     path("pages/", views.StudentListView.as_view(), name="pages"),
     path("stats/", views.stats, name="stats"),
 ]

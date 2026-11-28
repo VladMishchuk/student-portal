@@ -41,6 +41,23 @@ class RankingView(TemplateView):
         return context
 
 
+def ranking_json(request):
+    group = get_group()
+    data = [
+        {
+            "place": place,
+            "full_name": student.full_name,
+            "average": student.average(),
+        }
+        for place, student in enumerate(group.ranking(), start=1)
+    ]
+    return JsonResponse(
+        data,
+        safe=False,
+        json_dumps_params={"ensure_ascii": False},
+    )
+
+
 class StudentListView(ListView):
     template_name = "students/student_pages.html"
     context_object_name = "students"

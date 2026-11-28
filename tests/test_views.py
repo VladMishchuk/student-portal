@@ -135,3 +135,13 @@ def test_names_are_escaped(client, tmp_path, settings, group):
 )
 def test_ects_filter(score, expected):
     assert ects(score) == expected
+
+
+def test_ranking_json_returns_ordered_list(client, data_file):
+    response = client.get(reverse("students:ranking-json"))
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data[0] == {"place": 1, "full_name": "Коваль Олена", "average": 91.5}
+    assert data[-1] == {"place": 3, "full_name": "Бойко Ірина", "average": None}
+    assert "Коваль Олена" in response.text
