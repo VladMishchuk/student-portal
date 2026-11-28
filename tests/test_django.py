@@ -6,7 +6,7 @@ from django.urls import reverse
 from pytest_django.asserts import assertContains, assertTemplateUsed
 
 
-def test_ranking_page_lists_best_student_first(client, data_file):
+def test_ranking_page_lists_best_student_first(client, db_group):
     response = client.get(reverse("students:ranking"))
 
     assertTemplateUsed(response, "students/ranking.html")
@@ -14,7 +14,7 @@ def test_ranking_page_lists_best_student_first(client, data_file):
     assertContains(response, "<li>Коваль Олена: 91,5</li>", html=True)
 
 
-def test_ranking_page_shows_student_without_grades_last(client, data_file):
+def test_ranking_page_shows_student_without_grades_last(client, db_group):
     response = client.get(reverse("students:ranking"))
 
     text = response.text
@@ -55,7 +55,7 @@ def test_django_settings(settings):
     assert "students" in settings.INSTALLED_APPS
 
 
-def test_stats_page_shows_summary_and_ects_table(client, data_file):
+def test_stats_page_shows_summary_and_ects_table(client, db_group):
     response = client.get(reverse("students:stats"))
 
     assert response.status_code == 200
