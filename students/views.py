@@ -1,6 +1,8 @@
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.views.generic import ListView, TemplateView
+
+from student_portal.grades import ects_grade
 
 from .services import get_group, get_student_or_404
 
@@ -79,3 +81,20 @@ def stats(request):
             "ects_distribution": list(group.ects_distribution().items()),
         },
     )
+
+
+def by_ects(request, letter):
+    students = [
+        s
+        for s in get_group()
+        if s.average() is not None and ects_grade(round(s.average())) == letter
+    ]
+    return render(
+        request,
+        "students/by_ects.html",
+        {"letter": letter, "students": students},
+    )
+
+
+def legacy_student(request, student_id):
+    return redirect("students:detail", student_id=int(student_id), permanent=True)
