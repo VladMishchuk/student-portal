@@ -70,6 +70,32 @@ uv run --env-file .env python manage.py group_stats data/group.json # стати
 | `/students/st/<id:4>/` | Перенаправлення (301) зі старої адреси на картку | `legacy_student` (FBV) |
 | `/archive/2025/` | Архівний екземпляр застосунку (`archive-2025`) | `students.urls` (`include`) |
 
+### Вхід, ролі і REST API
+
+Увесь сайт закрито обов’язковим входом через `LoginRequiredMiddleware` (сторінка входу `/accounts/login/` відкрита, вихід `/accounts/logout/` приймає лише `POST`).
+
+Для створення груп і призначення прав застосунку `students` виконайте:
+
+```bash
+uv run --env-file .env python manage.py setup_roles
+```
+
+| Роль (група) | Права (`students`) | Доступні дії |
+| :--- | :--- | :--- |
+| `Викладачі` | `view_student`, `view_grade`, `add_grade` | Перегляд студентів і оцінок, додавання оцінок (`/students/<id>/grades/new/`) |
+| `Деканат` | `view_student`, `add_student`, `change_student`, `delete_student` | Перегляд, створення (`/students/new/`), зміна (`/students/<id>/edit/`) і видалення студентів |
+
+REST API побудовано на Django REST Framework (`DjangoModelPermissions`, пагінація по 20 записів):
+
+- `/api/students/` (`GET`, `POST`) та `/api/students/<id>/` (`GET`, `PUT`, `PATCH`, `DELETE`), підтримується фільтр `?last_name=<частина прізвища>`;
+- `/api/grades/` (`GET`, `POST`) — створення та перегляд оцінок (зміна й видалення через API заборонені).
+
+Приклад запиту до API з HTTP Basic автентифікацією:
+
+```bash
+curl -s -u teacher:<пароль> http://127.0.0.1:8000/api/students/
+```
+
 ### База даних і адмінпанель
 
 Усі сторінки вебзастосунку беруть дані з бази даних SQLite (`db.sqlite3`) через сервісний шар `students/services.py`, який перетворює ORM-записи (`Group`, `Student`, `Grade`) на об’єкти ядра `student_portal`. Якщо база порожня або недоступна, користувач отримує сторінку `503`.
