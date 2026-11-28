@@ -6,11 +6,11 @@ from django.urls import reverse
 from pytest_django.asserts import assertContains, assertNotContains, assertTemplateUsed
 
 from student_portal.people import Student
-from student_portal.storage import save_group
+from students.services import store_group
 from students.templatetags.grades import ects
 
 
-def test_student_list_shows_all_students_and_uses_templates(client, data_file):
+def test_student_list_shows_all_students_and_uses_templates(client, db_group):
     response = client.get(reverse("students:list"))
 
     assert response.status_code == 200
@@ -23,39 +23,39 @@ def test_student_list_shows_all_students_and_uses_templates(client, data_file):
     ]
 
 
-def test_search_uses_query_string(client, data_file):
+def test_search_uses_query_string(client, db_group):
     response = client.get(reverse("students:list"), {"q": "кова"})
 
     assert [s.last_name for s in response.context["students"]] == ["Коваль"]
     assertContains(response, 'value="кова"')
 
 
-def test_search_without_results_shows_empty_message(client, data_file):
+def test_search_without_results_shows_empty_message(client, db_group):
     response = client.get(reverse("students:list"), {"q": "zzz"})
 
     assert response.context["students"] == []
     assertContains(response, "Нікого не знайдено за запитом «zzz»")
 
 
-def test_student_detail_shows_grades_and_average(client, data_file):
+def test_student_detail_shows_grades_and_average(client, db_group):
     response = client.get(reverse("students:detail", args=[1]))
 
     assertContains(response, "<td>B</td>", html=True)
     assertContains(response, "Середній бал: 91,5 A")
 
 
-def test_student_detail_without_grades(client, data_file):
+def test_student_detail_without_grades(client, db_group):
     response = client.get(reverse("students:detail", args=[3]))
 
     assertContains(response, "Оцінок ще немає")
     assertContains(response, "Середній бал: -")
 
 
-def test_unknown_student_is_404(client, data_file):
+def test_unknown_student_is_404(client, db_group):
     assert client.get(reverse("students:detail", args=[42])).status_code == 404
 
 
-def test_student_json_returns_expected_dict(client, data_file):
+def test_student_json_returns_expected_dict(client, db_group):
     response = client.get(reverse("students:detail-json", args=[1]))
 
     assert response.status_code == 200
@@ -66,28 +66,28 @@ def test_student_json_returns_expected_dict(client, data_file):
     }
 
 
-def test_ranking_uses_student_line_three_times(client, data_file):
+def test_ranking_uses_student_line_three_times(client, db_group):
     response = client.get(reverse("students:ranking"))
 
     assertTemplateUsed(response, "students/_student_line.html", count=3)
     assertContains(response, "Бойко Ірина: немає оцінок")
 
 
-def test_ranking_post_returns_405(client, data_file):
+def test_ranking_post_returns_405(client, db_group):
     response = client.post(reverse("students:ranking"))
 
     assert response.status_code == 405
 
 
 @pytest.mark.parametrize(("page", "first"), [(1, "Коваль"), (2, "Бойко")])
-def test_ranking_pages(client, data_file, page, first):
+def test_ranking_pages(client, db_group, page, first):
     response = client.get(reverse("students:pages"), {"page": page})
 
     assert response.status_code == 200
     assert response.context["students"][0].last_name == first
 
 
-def test_ranking_pages_out_of_range_is_404(client, data_file):
+def test_ranking_pages_out_of_range_is_404(client, db_group):
     response = client.get(reverse("students:pages"), {"page": 9})
 
     assert response.status_code == 404
@@ -97,7 +97,7 @@ def test_ranking_pages_out_of_range_is_404(client, data_file):
     "url_name",
     ["students:list", "students:ranking", "students:pages"],
 )
-def test_pages_link_stylesheet(client, data_file, url_name):
+def test_pages_link_stylesheet(client, db_group, url_name):
     response = client.get(reverse(url_name))
 
     assertContains(response, 'href="/static/students/style.css"')
@@ -112,10 +112,9 @@ def test_student_row_partial_renders_alone(group):
     assert "<td>-</td>" in html
 
 
-def test_names_are_escaped(client, tmp_path, settings, group):
+def test_names_are_escaped(client, db, group):
     group.add(Student(4, "Марко", "<script>alert(1)</script>"))
-    settings.STUDENT_PORTAL_DATA = tmp_path / "group.json"
-    save_group(group, settings.STUDENT_PORTAL_DATA)
+    store_group(group)
 
     response = client.get(reverse("students:list"))
 
@@ -137,7 +136,7 @@ def test_ects_filter(score, expected):
     assert ects(score) == expected
 
 
-def test_ranking_json_returns_ordered_list(client, data_file):
+def test_ranking_json_returns_ordered_list(client, db_group):
     response = client.get(reverse("students:ranking-json"))
 
     assert response.status_code == 200
