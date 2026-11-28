@@ -1,8 +1,12 @@
 """Спільні фікстури тестів."""
 
+import io
 from collections.abc import Callable
 
 import pytest
+from django.contrib.auth.models import Group as AuthGroup
+from django.core.management import call_command
+from django.test import Client
 
 from student_portal.grades import Grade
 from student_portal.group import Group
@@ -62,3 +66,30 @@ def answers(monkeypatch):
         monkeypatch.setattr("builtins.input", lambda prompt="": next(replies))
 
     return set_answers
+
+
+@pytest.fixture
+def client(client, django_user_model):
+    """Тестовий клієнт Django від імені користувача, що увійшов (без особливих прав)."""
+    user = django_user_model.objects.create_user("viewer", password="pass-12345")
+    client.force_login(user)
+    return client
+
+
+@pytest.fixture
+def anonymous():
+    """Клієнт без входу: для перевірки LoginRequiredMiddleware."""
+    return Client()
+
+
+@pytest.fixture
+def role_user(db, django_user_model):
+    """Фабрика користувачів із роллю («Викладачі» або «Деканат»)."""
+    call_command("setup_roles", stdout=io.StringIO())
+
+    def make(username: str, role: str):
+        user = django_user_model.objects.create_user(username, password="pass-12345")
+        user.groups.add(AuthGroup.objects.get(name=role))
+        return user
+
+    return make

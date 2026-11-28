@@ -1,9 +1,15 @@
+from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
-from django.views.generic import ListView, TemplateView
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from student_portal.grades import ects_grade
 
+from . import models
+from .forms import GradeForm
 from .services import get_group, get_student_or_404
 
 
@@ -98,3 +104,43 @@ def by_ects(request, letter):
 
 def legacy_student(request, student_id):
     return redirect("students:detail", student_id=int(student_id), permanent=True)
+
+
+@permission_required("students.add_grade", raise_exception=True)
+def add_grade(request, student_id):
+    student = get_object_or_404(models.Student, pk=student_id)
+    if request.method == "POST":
+        form = GradeForm(request.POST)
+        if form.is_valid():
+            grade = form.save(commit=False)
+            grade.student = student
+            grade.save()
+            messages.success(
+                request,
+                f"Оцінку {grade.score} з {grade.course} збережено",
+            )
+            return redirect("students:detail", student_id=student.pk)
+    else:
+        form = GradeForm()
+    return render(
+        request,
+        "students/grade_form.html",
+        {"form": form, "student": student},
+    )
+
+
+class StudentCreateView(PermissionRequiredMixin, CreateView):
+    model = models.Student
+    fields = ["first_name", "last_name", "group"]
+    permission_required = "students.add_student"
+    success_url = reverse_lazy("students:list")
+
+
+class StudentUpdateView(PermissionRequiredMixin, UpdateView):
+    model = models.Student
+    fields = ["first_name", "last_name", "group"]
+    permission_required = "students.change_student"
+    pk_url_kwarg = "student_id"
+
+    def get_success_url(self):
+        return reverse_lazy("students:detail", args=[self.object.pk])
