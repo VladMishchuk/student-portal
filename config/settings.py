@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
     "students",
 ]
 
@@ -139,6 +140,14 @@ MAILERS = {
 
 LOGIN_REDIRECT_URL = "students:list"
 LOGOUT_REDIRECT_URL = "login"
+
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.DjangoModelPermissions",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+}
 
 STUDENT_PORTAL_DATA = BASE_DIR / "data" / "group.json"
 SLOW_REQUEST_MS = 500
