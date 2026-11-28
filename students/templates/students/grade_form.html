@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Нова оцінка — {{ student }}{% endblock %}
+
+{% block content %}
+<h1>Нова оцінка: {{ student }}</h1>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Зберегти</button>
+  <a href="{% url 'students:detail' student.pk %}">Скасувати</a>
+</form>
+{% endblock %}
