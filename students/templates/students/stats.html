@@ -1,20 +1,20 @@
-<!doctype html>
-<html lang="uk">
-<head><meta charset="utf-8"><title>Статистика {{ group.name }}</title></head>
-<body>
-  <h1>Статистика групи {{ group.name }}</h1>
-  <p>Кількість студентів: {{ student_count }}</p>
-  <p>Середній бал групи: {{ group_average|floatformat:1|default:"немає оцінок" }}</p>
-  <h2>Розподіл оцінок за шкалою ECTS</h2>
-  <table>
-    <thead>
-      <tr><th>Оцінка ECTS</th><th>Кількість</th></tr>
-    </thead>
-    <tbody>
-      {% for letter, count in ects_distribution %}
-        <tr><td>{{ letter }}</td><td>{{ count }}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Статистика {{ group.name }}{% endblock %}
+
+{% block content %}
+<h1>Статистика групи {{ group.name }}</h1>
+<p>Кількість студентів: {{ student_count }}</p>
+<p>Середній бал групи: {{ group_average|floatformat:1|default:"немає оцінок" }}</p>
+<h2>Розподіл оцінок за шкалою ECTS</h2>
+<table>
+  <thead>
+    <tr><th>Оцінка ECTS</th><th>Кількість</th></tr>
+  </thead>
+  <tbody>
+    {% for letter, count in ects_distribution %}
+      <tr><td>{{ letter }}</td><td>{{ count }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

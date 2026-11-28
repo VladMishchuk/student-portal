@@ -3,33 +3,22 @@
 import pytest
 from django.core.management import CommandError, call_command
 from django.urls import reverse
-
-from student_portal.storage import save_group
-
-
-@pytest.fixture
-def data_file(tmp_path, settings, group):
-    """Файл групи з трьох студентів замість data/group.json."""
-    path = tmp_path / "group.json"
-    save_group(group, path)
-    settings.STUDENT_PORTAL_DATA = path
-    return path
+from pytest_django.asserts import assertContains, assertTemplateUsed
 
 
 def test_ranking_page_lists_best_student_first(client, data_file):
     response = client.get(reverse("students:ranking"))
 
-    assert response.status_code == 200
-    assert [t.name for t in response.templates] == ["students/ranking.html"]
+    assertTemplateUsed(response, "students/ranking.html")
     assert response.context["group"].name == "КН-11"
-    assert "<li>Коваль Олена: 91,5</li>" in response.text
+    assertContains(response, "<li>Коваль Олена: 91,5</li>", html=True)
 
 
 def test_ranking_page_shows_student_without_grades_last(client, data_file):
     response = client.get(reverse("students:ranking"))
 
     text = response.text
-    assert "<li>Бойко Ірина: немає оцінок</li>" in text
+    assertContains(response, "<li>Бойко Ірина: немає оцінок</li>", html=True)
     assert (
         text.index("Коваль Олена")
         < text.index("Мельник Андрій")
@@ -70,7 +59,8 @@ def test_stats_page_shows_summary_and_ects_table(client, data_file):
     response = client.get(reverse("students:stats"))
 
     assert response.status_code == 200
-    assert [t.name for t in response.templates] == ["students/stats.html"]
+    assertTemplateUsed(response, "students/stats.html")
+    assertTemplateUsed(response, "base.html")
     assert response.context["student_count"] == 3
     assert response.context["group_average"] == pytest.approx((91.5 + 61.0) / 2)
     assert response.context["ects_distribution"] == [("A", 1), ("B", 1), ("E", 1)]

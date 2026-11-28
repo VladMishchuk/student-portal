@@ -53,6 +53,24 @@ uv run --env-file .env python manage.py runserver                  # запус�
 uv run --env-file .env python manage.py group_stats data/group.json # статистика групи з JSON-файлу
 ```
 
+### Сторінки
+
+| Адреса | Що показує | Представлення |
+| :--- | :--- | :--- |
+| `/students/` | Список студентів із пошуком (`?q=`) | `student_list` (FBV) |
+| `/students/<id>/` | Картка студента з оцінками та шкалою ECTS | `student_detail` (FBV) |
+| `/students/<id>.json` | Дані студента у форматі JSON | `student_json` (FBV) |
+| `/students/ranking/` | Рейтинг групи за середнім балом | `RankingView` (`TemplateView`) |
+| `/students/ranking.json` | Рейтинг групи у форматі JSON | `ranking_json` (FBV) |
+| `/students/pages/` | Рейтинг групи з пагінацією по 2 студенти | `StudentListView` (`ListView`) |
+| `/students/stats/` | Статистика групи та розподіл ECTS | `stats` (FBV) |
+
+Збирання статичних файлів для розгортання:
+
+```bash
+uv run --env-file .env python manage.py collectstatic --noinput
+```
+
 ## Журнал оцінок
 
 Застосунок підтримує пакетний імпорт оцінок із CSV-файлу з роздільником `;` (крапка з комою, кодування `UTF-8` або `UTF-8 with BOM`). Заголовок файлу: `student_id;course;score;graded_on`.
