@@ -10,6 +10,7 @@
   <nav>
     <a href="{% url 'students:list' %}">Студенти</a>
     <a href="{% url 'students:ranking' %}">Рейтинг</a>
+    <a href="{% url 'app' %}">Застосунок Vue</a>
     {% if user.is_authenticated %}
     <span>{{ user.username }}</span>
     <form method="post" action="{% url 'logout' %}" style="display:inline">
