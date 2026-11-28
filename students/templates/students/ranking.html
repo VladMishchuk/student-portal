@@ -4,7 +4,7 @@
 <body>
   <h1>Рейтинг групи {{ group.name }}</h1>
   <ol>
-    {% for student in group.ranking %}
+    {% for student in ranking %}
       <li>{{ student.full_name }}: {{ student.average|default:"немає оцінок" }}</li>
     {% endfor %}
   </ol>
