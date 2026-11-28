@@ -7,12 +7,20 @@ import pytest
 from django.contrib.auth.models import Group as AuthGroup
 from django.core.management import call_command
 from django.test import Client
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
+from portal_api import orm
+from portal_api.main import create_app
+from portal_api.settings import Settings
 from student_portal.grades import Grade
 from student_portal.group import Group
 from student_portal.people import Student
 from student_portal.storage import save_group
 from students.services import store_group
+
+API_KEY = "test-key-0123456789"
 
 type StudentFactory = Callable[..., Student]
 
@@ -93,3 +101,37 @@ def role_user(db, django_user_model):
         return user
 
     return make
+
+
+@pytest.fixture
+def api_db(tmp_path, group):
+    """Файл SQLite з таблицями, як у Django, і тією самою групою з трьох студентів."""
+    path = tmp_path / "api.sqlite3"
+    engine = create_engine(f"sqlite:///{path}")
+    orm.Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        record = orm.Group(name=group.name)
+        session.add_all(
+            orm.Student(
+                id=s.id,
+                group=record,
+                first_name=s.first_name,
+                last_name=s.last_name,
+                grades=[
+                    orm.Grade(course=g.course, score=g.score, graded_on=g.graded_on)
+                    for g in s.grades
+                ],
+            )
+            for s in group
+        )
+        session.commit()
+    engine.dispose()
+    return path
+
+
+@pytest.fixture
+def api(api_db):
+    """Клієнт FastAPI з ключем API; with запускає і зупиняє застосунок (lifespan)."""
+    settings = Settings(database_url=f"sqlite+aiosqlite:///{api_db}", api_key=API_KEY)
+    with TestClient(create_app(settings), headers={"X-API-Key": API_KEY}) as client:
+        yield client
