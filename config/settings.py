@@ -50,6 +50,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.csp.ContentSecurityPolicyMiddleware",
@@ -135,6 +136,9 @@ MAILERS = {
 }
 
 # Student portal
+
+LOGIN_REDIRECT_URL = "students:list"
+LOGOUT_REDIRECT_URL = "login"
 
 STUDENT_PORTAL_DATA = BASE_DIR / "data" / "group.json"
 SLOW_REQUEST_MS = 500
