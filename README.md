@@ -30,6 +30,29 @@ uv run student-portal    # запустити консольний застос�
 $env:LOG_LEVEL="INFO"; uv run student-portal
 ```
 
+## Вебзастосунок Django
+
+Проєкт містить вебзастосунок Django (`config/` та `students/`). Перед запуском створіть файл `.env` на основі `.env.example` і згенеруйте власний `DJANGO_SECRET_KEY`:
+
+```powershell
+Copy-Item .env.example .env
+uv run python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+| Змінна середовища | Призначення / приклад значення | Значення за замовчуванням |
+| :--- | :--- | :--- |
+| `DJANGO_SECRET_KEY` | Секретний ключ Django (обов'язковий) | — (викидає `KeyError`) |
+| `DJANGO_DEBUG` | Режим налагодження (`1` — увімкнено) | `"0"` (вимкнено) |
+| `DJANGO_ALLOWED_HOSTS` | Дозволені хости через пробіл (`"127.0.0.1 localhost"`) | `""` (порожній список) |
+
+Основні команди керування:
+
+```bash
+uv run --env-file .env python manage.py migrate                    # створити таблиці вбудованих застосунків
+uv run --env-file .env python manage.py runserver                  # запустити сервер розробки (http://127.0.0.1:8000/students/)
+uv run --env-file .env python manage.py group_stats data/group.json # статистика групи з JSON-файлу
+```
+
 ## Журнал оцінок
 
 Застосунок підтримує пакетний імпорт оцінок із CSV-файлу з роздільником `;` (крапка з комою, кодування `UTF-8` або `UTF-8 with BOM`). Заголовок файлу: `student_id;course;score;graded_on`.
@@ -56,9 +79,9 @@ uv run mypy src
 Модульні тести знаходяться у теці `tests/`. Вони використовують тимчасові директорії (`tmp_path`) і не змінюють файли в `data/`.
 
 ```bash
-uv run pytest                  # запустити всі тести
-uv run pytest -v               # докладний вивід кожного тесту
-uv run pytest -k ranking       # запустити тести за фільтром назви
+uv run --env-file .env pytest                  # запустити всі тести
+uv run --env-file .env pytest -v               # докладний вивід кожного тесту
+uv run --env-file .env pytest -k ranking       # запустити тести за фільтром назви
 ```
 
 ## Сервер деканату
@@ -82,12 +105,12 @@ $env:DEKANAT_URL="http://127.0.0.1:8001/group.json"; uv run student-portal
 Покриття коду (оператори та розгалуження, мінімальний поріг — `90 %`) перевіряється через `pytest-cov`:
 
 ```bash
-uv run pytest --cov
-uv run pytest --cov --cov-report=term-missing --cov-report=html
+uv run --env-file .env pytest --cov
+uv run --env-file .env pytest --cov --cov-report=term-missing --cov-report=html
 ```
 
 Конвеєр GitHub Actions (`.github/workflows/ci.yml`) автоматично запускається для кожного pull request та push у `main` і виконує два незалежні завдання:
-- `checks` — `uv sync --locked`, `ruff check`, `ruff format --check`, `mypy src`;
+- `checks` — `uv sync --locked`, `ruff check`, `ruff format --check`, `mypy src`, `manage.py check`, `manage.py makemigrations --check --dry-run`;
 - `tests` — `uv sync --locked`, `pytest --cov --cov-report=term-missing --cov-report=html` із завантаженням артефакту `coverage-html`.
 
 ## Планування
