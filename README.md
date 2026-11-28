@@ -48,22 +48,50 @@ uv run python -c "from django.core.management.utils import get_random_secret_key
 Основні команди керування:
 
 ```bash
-uv run --env-file .env python manage.py migrate                    # створити таблиці вбудованих застосунків
+uv run --env-file .env python manage.py migrate                    # створити таблиці вбудованих застосунків і моделей
+uv run --env-file .env python manage.py load_group data/group.json # завантажити групу з JSON у базу даних
 uv run --env-file .env python manage.py runserver                  # запустити сервер розробки (http://127.0.0.1:8000/students/)
 uv run --env-file .env python manage.py group_stats data/group.json # статистика групи з JSON-файлу
 ```
 
 ### Сторінки
 
-| Адреса | Що показує | Представлення |
+| Адреса | Що показує | Представлення / маршрут |
 | :--- | :--- | :--- |
+| `/` | Перенаправлення (302) на список студентів | `RedirectView` (`home`) |
 | `/students/` | Список студентів із пошуком (`?q=`) | `student_list` (FBV) |
 | `/students/<id>/` | Картка студента з оцінками та шкалою ECTS | `student_detail` (FBV) |
 | `/students/<id>.json` | Дані студента у форматі JSON | `student_json` (FBV) |
+| `/students/ects/<letter>/` | Студенти із середнім балом за літерою ECTS | `by_ects` (FBV) |
 | `/students/ranking/` | Рейтинг групи за середнім балом | `RankingView` (`TemplateView`) |
 | `/students/ranking.json` | Рейтинг групи у форматі JSON | `ranking_json` (FBV) |
 | `/students/pages/` | Рейтинг групи з пагінацією по 2 студенти | `StudentListView` (`ListView`) |
 | `/students/stats/` | Статистика групи та розподіл ECTS | `stats` (FBV) |
+| `/students/st/<id:4>/` | Перенаправлення (301) зі старої адреси на картку | `legacy_student` (FBV) |
+| `/archive/2025/` | Архівний екземпляр застосунку (`archive-2025`) | `students.urls` (`include`) |
+
+### База даних і адмінпанель
+
+Усі сторінки вебзастосунку беруть дані з бази даних SQLite (`db.sqlite3`) через сервісний шар `students/services.py`, який перетворює ORM-записи (`Group`, `Student`, `Grade`) на об’єкти ядра `student_portal`. Якщо база порожня або недоступна, користувач отримує сторінку `503`.
+
+1. **Завантаження даних у базу** (повторний запуск оновлює записи без дублювання):
+
+   ```bash
+   uv run --env-file .env python manage.py load_group data/group.json
+   ```
+
+2. **Створення адміністратора** для доступу до `/admin/`:
+
+   ```bash
+   uv run --env-file .env python manage.py createsuperuser
+   ```
+
+3. **Після зміни моделей** у `students/models.py` необхідно створити та застосувати міграцію:
+
+   ```bash
+   uv run --env-file .env python manage.py makemigrations students
+   uv run --env-file .env python manage.py migrate
+   ```
 
 Збирання статичних файлів для розгортання:
 
